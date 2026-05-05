@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>কুমিল্লা সেবা - লোকাল সার্ভিস প্রোভাইডার ডিরেক্টরি</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* Custom styles */
+        .hero-gradient {
+            background: linear-gradient(rgba(4, 120, 87, 0.85), rgba(6, 78, 59, 0.9)), url('assets/hero_bg.png');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .category-icon {
+            font-size: 2.5rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .category-card:hover .category-icon {
+            transform: scale(1.2);
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .bangla-font {
+            font-family: 'SolaimanLipi', 'Arial', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 pb-16 md:pb-0">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center gap-2">
+                    <img src="assets/app_logo.png" alt="Logo" class="h-8 w-8 rounded-md shadow-sm">
+                    <div>
+                        <h1 class="text-2xl font-bold text-emerald-600 bangla-font leading-none">কুমিল্লা সেবা</h1>
+                        <span class="text-gray-500 text-[10px] uppercase font-bold tracking-wider">লোকাল সেবা</span>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="index.html" class="text-gray-700 hover:text-emerald-600 transition">হোম</a>
+                    <a href="categories.html" class="text-gray-700 hover:text-emerald-600 transition">ক্যাটাগরি</a>
+                    <a href="providers.html" class="text-gray-700 hover:text-emerald-600 transition">প্রোভাইডার</a>
+                    <a href="register.html" id="register-btn" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 transition">নিবন্ধন</a>
+                    <a href="login.html" id="login-btn" class="border border-emerald-600 text-emerald-600 px-4 py-2 rounded hover:bg-emerald-50 transition">লগইন</a>
+                    <div id="user-info" class="hidden text-gray-700"></div>
+                    <button id="logout-btn" class="hidden border border-red-600 text-red-600 px-4 py-2 rounded hover:bg-red-50 transition">লগআউট</button>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <button class="md:hidden" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+            
+            <!-- Mobile menu -->
+            <div id="mobile-menu" class="hidden md:hidden pb-4">
+                <a href="index.html" class="block py-2 text-gray-700 hover:text-emerald-600">হোম</a>
+                <a href="categories.html" class="block py-2 text-gray-700 hover:text-emerald-600">ক্যাটাগরি</a>
+                <a href="providers.html" class="block py-2 text-gray-700 hover:text-emerald-600">প্রোভাইডার</a>
+                <a href="register.html" class="block py-2 text-gray-700 hover:text-emerald-600">নিবন্ধন</a>
+                <a href="login.html" class="block py-2 text-gray-700 hover:text-emerald-600">লগইন</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient text-white">
+        <div class="container mx-auto px-4 py-16">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4 bangla-font">কুমিল্লা সেবা</h1>
+                <p class="text-xl md:text-2xl mb-2 text-emerald-100">লোকাল সেবা</p>
+                <p class="text-lg text-emerald-100 max-w-2xl mx-auto">
+                    আপনার এলাকার সেরা সার্ভিস প্রোভাইডার খুঁজুন - ইলেকট্রিশিয়ান, প্লাম্বার, কার্পেন্টার, আরও অনেকে
+                </p>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="max-w-2xl mx-auto">
+                <div class="bg-white rounded-lg shadow-lg p-2 flex gap-2">
+                    <div class="flex-1 relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input
+                            type="text"
+                            id="search-input"
+                            placeholder="সার্ভিস অনুসন্ধান করুন... (যেমন: ইলেকট্রিশিয়ান, প্লাম্বার)"
+                            class="w-full pl-10 pr-4 py-3 border-0 focus:ring-0 text-gray-800 rounded"
+                            onkeyup="handleSearch(event)"
+                        />
+                    </div>
+                    <button onclick="performSearch()" class="bg-emerald-600 text-white px-6 py-3 rounded hover:bg-emerald-700 transition">
+                        খুঁজুন
+                    </button>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="providers.html" class="text-emerald-100 hover:text-white underline">সব প্রোভাইডার দেখুন</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Popular Categories -->
+    <section class="py-16">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold mb-3 bangla-font">জনপ্রিয় সার্ভিস ক্যাটাগরি</h2>
+                <p class="text-gray-600">আপনার প্রয়োজনীয় সার্ভিস নির্বাচন করুন</p>
+            </div>
+
+            <div id="categories-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <!-- Loading spinner -->
+                <div class="col-span-full flex justify-center">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+
+            <div class="text-center mt-8">
+                <a href="categories.html">
+                    <button class="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition">
+                        সব ক্যাটাগরি দেখুন
+                    </button>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Providers -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold mb-3 bangla-font">বৈশিষ্ট্যযুক্ত প্রোভাইডার</h2>
+                <p class="text-gray-600">যাচাইকৃত এবং নির্ভরযোগ্য সার্ভিস প্রোভাইডার</p>
+            </div>
+
+            <div id="featured-providers-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Loading spinner -->
+                <div class="col-span-full flex justify-center">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+
+            <div class="text-center mt-8">
+                <a href="providers.html">
+                    <button class="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition">
+                        আরও প্রোভাইডার দেখুন
+                    </button>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="py-16">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold mb-3 bangla-font">কিভাবে কাজ করে</h2>
+                <p class="text-gray-600">সহজেই সার্ভিস প্রোভাইডার খুঁজুন এবং যোগাযোগ করুন</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-search text-emerald-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2 bangla-font">১. অনুসন্ধান করুন</h3>
+                    <p class="text-gray-600">আপনার প্রয়োজনীয় সার্ভিস অনুসন্ধান করুন অথবা ক্যাটাগরি থেকে বেছে নিন</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-phone text-emerald-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2 bangla-font">২. যোগাযোগ করুন</h3>
+                    <p class="text-gray-600">সরাসরি কল করুন অথবা WhatsApp এ বার্তা পাঠান</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-star text-emerald-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2 bangla-font">৩. রিভিউ দিন</h3>
+                    <p class="text-gray-600">সার্ভিস নেওয়ার পরে রিভিউ দিয়ে অন্যদের সাহায্য করুন</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="bg-emerald-600 text-white py-16">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold mb-4 bangla-font">আপনি কি সার্ভিস প্রোভাইডার?</h2>
+            <p class="text-xl mb-8 text-emerald-100">
+                আমাদের প্ল্যাটফর্মে যোগ দিন এবং আরও গ্রাহক পান
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="register.html">
+                    <button class="bg-white text-emerald-600 px-6 py-3 rounded-lg hover:bg-gray-100 transition">
+                        প্রোভাইডার হিসেবে নিবন্ধন করুন
+                    </button>
+                </a>
+                <a href="providers.html">
+                    <button class="border border-white text-white px-6 py-3 rounded-lg hover:bg-white hover:text-emerald-600 transition">
+                        প্রোভাইডার খুঁজুন
+                    </button>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <h3 class="text-2xl font-bold mb-4 bangla-font">কুমিল্লা সেবা</h3>
+                <p class="text-gray-400 mb-4">আপনার বিশ্বস্ত সার্ভিস প্রোভাইডার ডিরেক্টরি</p>
+                <div class="flex justify-center space-x-4 mb-4">
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-youtube"></i></a>
+                </div>
+                <p class="text-gray-400 text-sm">© 2024 কুমিল্লা সেবা. সর্বস্বত্ব সংরক্ষিত.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Firebase Scripts -->
+    <script src="firebase-project/firebase-config.js"></script>
+    <script src="firebase-project/auth.js"></script>
+    <script src="firebase-project/db.js"></script>
+
+    <!-- Main JavaScript -->
+    <script>
+        // Global variables
+        let categories = [];
+        let featuredProviders = [];
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        async function initializeApp() {
+            try {
+                // Load categories
+                await loadCategories();
+                
+                // Load featured providers
+                await loadFeaturedProviders();
+                
+                // Setup event listeners
+                setupEventListeners();
+                
+                console.log('App initialized successfully');
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showToast('অ্যাপ লোড করতে সমস্যা হয়েছে', 'error');
+            }
+        }
+
+        // Load categories from Firebase
+        async function loadCategories() {
+            try {
+                const result = await dbManager.getCategories();
+                if (result.success) {
+                    categories = result.data.slice(0, 6); // Show only first 6 categories
+                    renderCategories();
+                } else {
+                    // Use mock data if Firebase fails
+                    categories = getMockCategories();
+                    renderCategories();
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                categories = getMockCategories();
+                renderCategories();
+            }
+        }
+
+        // Load featured providers from Firebase
+        async function loadFeaturedProviders() {
+            try {
+                const result = await dbManager.getProviders({ isApproved: true });
+                if (result.success) {
+                    featuredProviders = result.data.slice(0, 6); // Show only first 6 providers
+                    renderFeaturedProviders();
+                } else {
+                    // Use mock data if Firebase fails
+                    featuredProviders = getMockProviders();
+                    renderFeaturedProviders();
+                }
+            } catch (error) {
+                console.error('Error loading featured providers:', error);
+                featuredProviders = getMockProviders();
+                renderFeaturedProviders();
+            }
+        }
+
+        // Render categories
+        function renderCategories() {
+            const container = document.getElementById('categories-container');
+            container.innerHTML = '';
+
+            categories.forEach(category => {
+                const categoryCard = createCategoryCard(category);
+                container.appendChild(categoryCard);
+            });
+        }
+
+        // Render featured providers
+        function renderFeaturedProviders() {
+            const container = document.getElementById('featured-providers-container');
+            container.innerHTML = '';
+
+            featuredProviders.forEach(provider => {
+                const providerCard = createProviderCard(provider);
+                container.appendChild(providerCard);
+            });
+        }
+
+        // Create category card
+        function createCategoryCard(category) {
+            const div = document.createElement('div');
+            div.className = 'category-card card-hover bg-white rounded-lg shadow-md p-6 text-center cursor-pointer';
+            div.onclick = () => window.location.href = `providers.html?category=${category.slug}`;
+            
+            div.innerHTML = `
+                <div class="category-icon mb-3">${category.icon}</div>
+                <h3 class="font-semibold text-lg mb-1 bangla-font">${category.nameBn}</h3>
+            `;
+            
+            return div;
+        }
+
+        // Create provider card
+        function createProviderCard(provider) {
+            const div = document.createElement('div');
+            div.className = 'card-hover bg-white rounded-lg shadow-md p-6';
+            
+            const skills = Array.isArray(provider.skills) ? provider.skills : JSON.parse(provider.skills || '[]');
+            const skillsHtml = skills.slice(0, 3).map(skill => `<span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">${skill}</span>`).join('');
+            
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">${provider.name}</h3>
+                        <div class="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${provider.location}</span>
+                        </div>
+                        <div class="flex items-center gap-1 mb-2">
+                            ${generateStars(provider.rating)}
+                            <span class="text-sm text-gray-600">(${provider.reviewCount} রিভিউ)</span>
+                        </div>
+                    </div>
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-emerald-100">
+                        ${provider.photoURL ? `<img src="${provider.photoURL}" class="w-full h-full object-cover">` : `<img src="assets/provider_placeholder.png" class="w-full h-full object-cover">`}
+                    </div>
+                </div>
+                <p class="text-sm text-gray-600 mb-3">${provider.description}</p>
+                <div class="flex flex-wrap gap-1 mb-4">
+                    ${skillsHtml}
+                </div>
+                <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
+                    <i class="fas fa-clock"></i>
+                    <span>${provider.experience} বছরের অভিজ্ঞতা</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="callProvider('${provider.phone}')" class="flex-1 bg-emerald-600 text-white py-2 rounded hover:bg-emerald-700 transition">
+                        <i class="fas fa-phone mr-2"></i>কল করুন
+                    </button>
+                    <button onclick="whatsappProvider('${provider.whatsapp}')" class="flex-1 border border-emerald-600 text-emerald-600 py-2 rounded hover:bg-emerald-50 transition">
+                        <i class="fab fa-whatsapp mr-2"></i>হোয়াটসঅ্যাপ
+                    </button>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        // Generate star rating HTML
+        function generateStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= Math.floor(rating)) {
+                    stars += '<i class="fas fa-star text-yellow-400"></i>';
+                } else {
+                    stars += '<i class="far fa-star text-gray-300"></i>';
+                }
+            }
+            return stars;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Logout button
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    const result = await authManager.logout();
+                    if (result.success) {
+                        showToast('সফলভাবে লগআউট হয়েছে', 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    }
+                });
+            }
+        }
+
+        // Search functionality
+        function handleSearch(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        }
+
+        function performSearch() {
+            const searchTerm = document.getElementById('search-input').value.trim();
+            if (searchTerm) {
+                window.location.href = `providers.html?search=${encodeURIComponent(searchTerm)}`;
+            }
+        }
+
+        // Contact functions
+        function callProvider(phone) {
+            window.open(`tel:${phone}`);
+        }
+
+        function whatsappProvider(whatsapp) {
+            const message = `হ্যালো, আমি লোকাল সেবা থেকে আপনার প্রোফাইল দেখেছি এবং আপনার সার্ভিস প্রয়োজন।`;
+            window.open(`https://wa.me/${whatsapp.replace(/^0/, '880')}?text=${encodeURIComponent(message)}`);
+        }
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast bg-${type === 'error' ? 'red' : type === 'success' ? 'emerald' : 'blue'}-600 text-white px-6 py-3 rounded-lg shadow-lg`;
+            toast.textContent = message;
+            
+            const container = document.getElementById('toast-container');
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Mock data functions (fallback)
+        function getMockCategories() {
+            return [
+                { id: '1', slug: 'electric', name: 'Electrician', nameBn: 'ইলেকট্রিশিয়ান', icon: '<i class="fas fa-bolt text-emerald-500"></i>' },
+                { id: '2', slug: 'plumbing', name: 'Plumber', nameBn: 'প্লাম্বার', icon: '<i class="fas fa-wrench text-emerald-500"></i>' },
+                { id: '3', slug: 'carpenter', name: 'Carpenter', nameBn: 'কার্পেন্টার', icon: '<i class="fas fa-hammer text-emerald-500"></i>' },
+                { id: '4', slug: 'painter', name: 'Painter', nameBn: 'পেইন্টার', icon: '<i class="fas fa-paint-roller text-emerald-500"></i>' },
+                { id: '5', slug: 'mechanic', name: 'Mechanic', nameBn: 'মেকানিক', icon: '<i class="fas fa-car text-emerald-500"></i>' },
+                { id: '6', slug: 'ac-service', name: 'AC Service', nameBn: 'এসি সার্ভিস', icon: '<i class="fas fa-snowflake text-emerald-500"></i>' }
+            ];
+        }
+
+        function getMockProviders() {
+            return [
+                {
+                    id: '1',
+                    name: 'রহিম ইলেকট্রিক্স',
+                    phone: '01712345678',
+                    whatsapp: '01712345678',
+                    category: ['electric'],
+                    skills: '["হোম ওয়্যারিং", "এসি ইন্সটলেশন", "জেনারেটর সার্ভিস"]',
+                    experience: 8,
+                    rating: 4.5,
+                    reviewCount: 23,
+                    location: 'কুমিল্লা সদর',
+                    isApproved: true,
+                    photoURL: null,
+                    description: '৮+ বছরের অভিজ্ঞতা সম্পন্ন পেশাদার ইলেকট্রিক্যাল সার্ভিস'
+                },
+                {
+                    id: '2',
+                    name: 'বাবুল প্লাম্বিং',
+                    phone: '01823456789',
+                    whatsapp: '01823456789',
+                    category: ['plumbing'],
+                    skills: '["পাইপ ফিটিং", "বাথরুম ইন্সটলেশন", "পাম্প মেরামত"]',
+                    experience: 5,
+                    rating: 4.2,
+                    reviewCount: 18,
+                    location: 'চট্টগ্রাম',
+                    isApproved: true,
+                    photoURL: null,
+                    description: 'সাশ্রয়ী মূল্যে নির্ভরযোগ্য প্লাম্বিং সার্ভিস'
+                },
+                {
+                    id: '3',
+                    name: 'করিম কার্পেন্টার',
+                    phone: '01934567890',
+                    whatsapp: '01934567890',
+                    category: ['carpenter'],
+                    skills: '["ফার্নিচার তৈরি", "দরজা ইন্সটলেশন", "ক্যাবিনেট কাজ"]',
+                    experience: 12,
+                    rating: 4.8,
+                    reviewCount: 31,
+                    location: 'কুমিল্লা সদর',
+                    isApproved: true,
+                    photoURL: null,
+                    description: 'কাস্টম ফার্নিচার তৈরিতে বিশেষজ্ঞ কার্পেন্টার'
+                }
+            ];
+        }
+    </script>
+    <!-- Mobile Bottom Navigation -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-2 py-3 flex justify-around items-center">
+        <a href="index.html" class="flex flex-col items-center text-emerald-600">
+            <i class="fas fa-home text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">হোম</span>
+        </a>
+        <a href="categories.html" class="flex flex-col items-center text-gray-500 hover:text-emerald-600 transition">
+            <i class="fas fa-th-large text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">ক্যাটাগরি</span>
+        </a>
+        <a href="providers.html" class="flex flex-col items-center text-gray-500 hover:text-emerald-600 transition">
+            <i class="fas fa-users text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">প্রোভাইডার</span>
+        </a>
+        <a href="login.html" class="flex flex-col items-center text-gray-500 hover:text-emerald-600 transition">
+            <i class="fas fa-user text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">অ্যাকাউন্ট</span>
+        </a>
+    </div>
+</body>
+</html>

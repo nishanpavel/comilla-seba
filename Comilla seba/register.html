@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>নিবন্ধন - কুমিল্লা সেবা</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #047857 0%, #064e3b 100%);
+        }
+        .bangla-font {
+            font-family: 'SolaimanLipi', 'Arial', sans-serif;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 pb-16 md:pb-0 flex flex-col min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <a href="index.html" class="flex items-center gap-2">
+                        <img src="assets/app_logo.png" alt="Logo" class="h-8 w-8 rounded-md shadow-sm">
+                        <div>
+                            <h1 class="text-2xl font-bold text-emerald-600 bangla-font leading-none">কুমিল্লা সেবা</h1>
+                            <span class="text-gray-500 text-[10px] uppercase font-bold tracking-wider">লোকাল সেবা</span>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="index.html" class="text-gray-700 hover:text-emerald-600 transition">হোম</a>
+                    <a href="categories.html" class="text-gray-700 hover:text-emerald-600 transition">ক্যাটাগরি</a>
+                    <a href="providers.html" class="text-gray-700 hover:text-emerald-600 transition">প্রোভাইডার</a>
+                    <a href="register.html" id="register-btn" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 transition">নিবন্ধন</a>
+                    <a href="login.html" id="login-btn" class="border border-emerald-600 text-emerald-600 px-4 py-2 rounded hover:bg-emerald-50 transition">লগইন</a>
+                </div>
+                
+                <button class="md:hidden" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+            
+            <div id="mobile-menu" class="hidden md:hidden pb-4">
+                <a href="index.html" class="block py-2 text-gray-700 hover:text-emerald-600">হোম</a>
+                <a href="categories.html" class="block py-2 text-gray-700 hover:text-emerald-600">ক্যাটাগরি</a>
+                <a href="providers.html" class="block py-2 text-gray-700 hover:text-emerald-600">প্রোভাইডার</a>
+                <a href="register.html" class="block py-2 text-gray-700 hover:text-emerald-600">নিবন্ধন</a>
+                <a href="login.html" class="block py-2 text-gray-700 hover:text-emerald-600">লগইন</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Register Form -->
+    <div class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 bangla-font">নিবন্ধন করুন</h2>
+                <p class="text-gray-600 mt-2">নতুন অ্যাকাউন্ট তৈরি করুন</p>
+            </div>
+            
+            <form id="register-form" class="space-y-4">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2 bangla-font" for="name">
+                        পুরো নাম
+                    </label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" id="name" type="text" placeholder="আপনার পুরো নাম" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2 bangla-font" for="email">
+                        ইমেইল
+                    </label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" id="email" type="email" placeholder="আপনার ইমেইল" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2 bangla-font" for="phone">মোবাইল নম্বর</label>
+                    <input type="tel" id="phone" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2 bangla-font" for="role">
+                        অ্যাকাউন্টের ধরন
+                    </label>
+                    <select id="role" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bangla-font">
+                        <option value="customer">কাস্টমার (সার্ভিস খুঁজছেন)</option>
+                        <option value="provider">প্রোভাইডার (সার্ভিস দিতে চান)</option>
+                    </select>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2 bangla-font" for="password">
+                        পাসওয়ার্ড
+                    </label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" id="password" type="password" placeholder="কমপক্ষে ৬টি অক্ষর" required>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="submit-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:shadow-outline w-full transition bangla-font">
+                        নিবন্ধন করুন
+                    </button>
+                </div>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    ইতোমধ্যে অ্যাকাউন্ট আছে? 
+                    <a href="login.html" class="text-emerald-600 hover:text-emerald-800 bangla-font">লগইন করুন</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <h3 class="text-2xl font-bold mb-4 bangla-font">কুমিল্লা সেবা</h3>
+                <p class="text-gray-400 mb-4">আপনার বিশ্বস্ত সার্ভিস প্রোভাইডার ডিরেক্টরি</p>
+                <div class="flex justify-center space-x-4 mb-4">
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-youtube"></i></a>
+                </div>
+                <p class="text-gray-400 text-sm">© 2024 কুমিল্লা সেবা. সর্বস্বত্ব সংরক্ষিত.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="toast-container"></div>
+
+    <!-- Firebase Scripts -->
+    <script src="firebase-project/firebase-config.js"></script>
+    <script src="firebase-project/auth.js"></script>
+    <script src="firebase-project/db.js"></script>
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast bg-${type === 'error' ? 'red' : 'emerald'}-600 text-white px-6 py-3 rounded-lg shadow-lg bangla-font`;
+            toast.textContent = message;
+            
+            const container = document.getElementById('toast-container');
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'অপেক্ষা করুন...';
+            submitBtn.disabled = true;
+
+            const result = await authManager.registerWithEmail(email, password, name, phone, role);
+            
+            if (result.success) {
+                showToast('সফলভাবে নিবন্ধন সম্পন্ন হয়েছে!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            } else {
+                showToast(result.error || 'নিবন্ধন ব্যর্থ হয়েছে', 'error');
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Redirect if already logged in
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+    <!-- Mobile Bottom Navigation -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-2 py-3 flex justify-around items-center">
+        <a href="index.html" class="flex flex-col items-center text-gray-500 hover:text-emerald-600 transition">
+            <i class="fas fa-home text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">হোম</span>
+        </a>
+        <a href="categories.html" class="flex flex-col items-center text-gray-500 hover:text-emerald-600 transition">
+            <i class="fas fa-th-large text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">ক্যাটাগরি</span>
+        </a>
+        <a href="providers.html" class="flex flex-col items-center text-gray-500 hover:text-emerald-600 transition">
+            <i class="fas fa-users text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">প্রোভাইডার</span>
+        </a>
+        <a href="register.html" class="flex flex-col items-center text-emerald-600">
+            <i class="fas fa-user-plus text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">নিবন্ধন</span>
+        </a>
+    </div>
+</body>
+</html>

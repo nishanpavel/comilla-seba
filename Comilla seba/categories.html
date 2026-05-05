@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>সব ক্যাটাগরি - কুমিল্লা সেবা</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        .hero-gradient {
+            background: linear-gradient(rgba(4, 120, 87, 0.85), rgba(6, 78, 59, 0.9)), url('assets/hero_bg.png');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .category-icon {
+            font-size: 3rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .category-card:hover .category-icon {
+            transform: scale(1.2);
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .bangla-font {
+            font-family: 'SolaimanLipi', 'Arial', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 pb-16 md:pb-0">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center gap-2">
+                    <img src="assets/app_logo.png" alt="Logo" class="h-8 w-8 rounded-md shadow-sm">
+                    <div>
+                        <h1 class="text-2xl font-bold text-emerald-600 bangla-font leading-none">কুমিল্লা সেবা</h1>
+                        <span class="text-gray-500 text-[10px] uppercase font-bold tracking-wider">লোকাল সেবা</span>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="index.html" class="text-gray-700 hover:text-emerald-600 transition">হোম</a>
+                    <a href="categories.html" class="text-emerald-600 font-semibold transition">ক্যাটাগরি</a>
+                    <a href="providers.html" class="text-gray-700 hover:text-emerald-600 transition">প্রোভাইডার</a>
+                    <a href="register.html" id="register-btn" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 transition">নিবন্ধন</a>
+                    <a href="login.html" id="login-btn" class="border border-emerald-600 text-emerald-600 px-4 py-2 rounded hover:bg-emerald-50 transition">লগইন</a>
+                    <div id="user-info" class="hidden text-gray-700"></div>
+                    <button id="logout-btn" class="hidden border border-red-600 text-red-600 px-4 py-2 rounded hover:bg-red-50 transition">লগআউট</button>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <button class="md:hidden" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+            
+            <!-- Mobile menu -->
+            <div id="mobile-menu" class="hidden md:hidden pb-4">
+                <a href="index.html" class="block py-2 text-gray-700 hover:text-emerald-600">হোম</a>
+                <a href="categories.html" class="block py-2 text-emerald-600 font-semibold">ক্যাটাগরি</a>
+                <a href="providers.html" class="block py-2 text-gray-700 hover:text-emerald-600">প্রোভাইডার</a>
+                <a href="register.html" class="block py-2 text-gray-700 hover:text-emerald-600">নিবন্ধন</a>
+                <a href="login.html" class="block py-2 text-gray-700 hover:text-emerald-600">লগইন</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <section class="hero-gradient text-white">
+        <div class="container mx-auto px-4 py-12">
+            <div class="flex items-center gap-4 mb-6">
+                <a href="index.html" class="text-white hover:text-emerald-200">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold bangla-font">সার্ভিস ক্যাটাগরি</h1>
+                    <p class="text-emerald-100 mt-1">আপনার প্রয়োজনীয় সার্ভিস বেছে নিন</p>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="max-w-2xl">
+                <div class="bg-white rounded-lg shadow-lg p-2 flex gap-2">
+                    <div class="flex-1 relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input
+                            type="text"
+                            id="search-input"
+                            placeholder="ক্যাটাগরি অনুসন্ধান করুন... (যেমন: ইলেকট্রিশিয়ান, প্লাম্বার)"
+                            class="w-full pl-10 pr-4 py-3 border-0 focus:ring-0 text-gray-800 rounded"
+                            onkeyup="handleSearch(event)"
+                        />
+                    </div>
+                    <button onclick="performSearch()" class="bg-emerald-600 text-white px-6 py-3 rounded hover:bg-emerald-700 transition">
+                        খুঁজুন
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Grid -->
+    <section class="py-16">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-10">
+                <h2 class="text-2xl font-bold mb-3 bangla-font">সার্ভিস ক্যাটাগরি সমূহ</h2>
+                <p class="text-gray-600">আপনার প্রয়োজনীয় সার্ভিস ক্যাটাগরি নির্বাচন করুন</p>
+            </div>
+
+            <div id="categories-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Loading spinner -->
+                <div class="col-span-full flex justify-center">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+
+            <!-- Popular Categories -->
+            <div class="mt-16">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold mb-3 bangla-font">জনপ্রিয় ক্যাটাগরি</h2>
+                    <p class="text-gray-600">সবচেয়ে বেশি অনুসন্ধান করা সার্ভিস সমূহ</p>
+                </div>
+
+                <div id="popular-categories" class="flex flex-wrap gap-3 justify-center">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- CTA Section -->
+            <div class="mt-16 text-center bg-emerald-50 rounded-xl p-8">
+                <h3 class="text-2xl font-bold mb-4 bangla-font text-emerald-900">আপনার প্রয়োজনীয় সার্ভিস পাচ্ছেন না?</h3>
+                <p class="text-gray-600 mb-6 max-w-2xl mx-auto">
+                    আমরা নিয়মিত নতুন ক্যাটাগরি যোগ করছি। আপনার প্রয়োজনীয় সার্ভিস যদি না থাকে, আমাদের জানান
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button onclick="requestNewCategory()" class="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition">
+                        নতুন ক্যাটাগরির জন্য অনুরোধ করুন
+                    </button>
+                    <a href="providers.html">
+                        <button class="border border-emerald-600 text-emerald-600 px-6 py-3 rounded-lg hover:bg-emerald-50 transition">
+                            সব প্রোভাইডার দেখুন
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <h3 class="text-2xl font-bold mb-4 bangla-font">কুমিল্লা সেবা</h3>
+                <p class="text-gray-400 mb-4">আপনার বিশ্বস্ত সার্ভিস প্রোভাইডার ডিরেক্টরি</p>
+                <div class="flex justify-center space-x-4 mb-4">
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-youtube"></i></a>
+                </div>
+                <p class="text-gray-400 text-sm">© 2024 কুমিল্লা সেবা. সর্বস্বত্ব সংরক্ষিত.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Firebase Scripts -->
+    <script src="firebase-project/firebase-config.js"></script>
+    <script src="firebase-project/auth.js"></script>
+    <script src="firebase-project/db.js"></script>
+
+    <!-- Main JavaScript -->
+    <script>
+        // Global variables
+        let allCategories = [];
+        let filteredCategories = [];
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        async function initializeApp() {
+            try {
+                // Load categories
+                await loadCategories();
+                
+                // Setup event listeners
+                setupEventListeners();
+                
+                console.log('Categories page initialized successfully');
+            } catch (error) {
+                console.error('Error initializing categories page:', error);
+                showToast('পেজ লোড করতে সমস্যা হয়েছে', 'error');
+            }
+        }
+
+        // Load categories from Firebase
+        async function loadCategories() {
+            try {
+                const result = await dbManager.getCategories();
+                if (result.success) {
+                    allCategories = result.data;
+                    filteredCategories = allCategories;
+                    renderCategories();
+                    renderPopularCategories();
+                } else {
+                    // Use mock data if Firebase fails
+                    allCategories = getMockCategories();
+                    filteredCategories = allCategories;
+                    renderCategories();
+                    renderPopularCategories();
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                allCategories = getMockCategories();
+                filteredCategories = allCategories;
+                renderCategories();
+                renderPopularCategories();
+            }
+        }
+
+        // Render categories
+        function renderCategories() {
+            const container = document.getElementById('categories-container');
+            container.innerHTML = '';
+
+            if (filteredCategories.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600">কোন ক্যাটাগরি পাওয়া যায়নি</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredCategories.forEach(category => {
+                const categoryCard = createCategoryCard(category);
+                container.appendChild(categoryCard);
+            });
+        }
+
+        // Render popular categories
+        function renderPopularCategories() {
+            const container = document.getElementById('popular-categories');
+            container.innerHTML = '';
+
+            const popularCategories = allCategories.slice(0, 6);
+            
+            popularCategories.forEach(category => {
+                const badge = document.createElement('a');
+                badge.href = `providers.html?category=${category.slug}`;
+                badge.className = 'inline-flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-full hover:bg-emerald-50 hover:border-emerald-300 transition-colors';
+                badge.innerHTML = `
+                    <span>${category.icon}</span>
+                    <span>${category.nameBn}</span>
+                `;
+                container.appendChild(badge);
+            });
+        }
+
+        // Create category card
+        function createCategoryCard(category) {
+            const div = document.createElement('div');
+            div.className = 'category-card card-hover group bg-white rounded-lg shadow-md p-6 text-center cursor-pointer h-full';
+            div.onclick = () => window.location.href = `providers.html?category=${category.slug}`;
+            
+            const providerCount = category.providerCount || Math.floor(Math.random() * 50) + 10;
+            
+            div.innerHTML = `
+                <div class="bg-emerald-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-emerald-100 transition text-2xl">
+                    ${category.icon || '<i class="fas fa-tools text-emerald-500"></i>'}
+                </div>
+                <h3 class="text-xl font-semibold mb-2 bangla-font group-hover:text-emerald-600 transition">${category.nameBn}</h3>
+                <p class="text-gray-600 mb-4 bangla-font text-sm">${category.descriptionBn || category.description}</p>
+                <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center gap-1 text-sm text-gray-500">
+                        <i class="fas fa-users"></i>
+                        <span>${providerCount} প্রোভাইডার</span>
+                    </div>
+                    <span class="text-emerald-600 font-medium group-hover:translate-x-1 transition">বিস্তারিত →</span>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        // Search functionality
+        function handleSearch(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        }
+
+        function performSearch() {
+            const searchTerm = document.getElementById('search-input').value.trim().toLowerCase();
+            
+            if (searchTerm === '') {
+                filteredCategories = allCategories;
+            } else {
+                filteredCategories = allCategories.filter(category => 
+                    category.name.toLowerCase().includes(searchTerm) ||
+                    category.nameBn.toLowerCase().includes(searchTerm) ||
+                    (category.description && category.description.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            renderCategories();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Logout button
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    const result = await authManager.logout();
+                    if (result.success) {
+                        showToast('সফলভাবে লগআউট হয়েছে', 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    }
+                });
+            }
+        }
+
+        // Request new category
+        function requestNewCategory() {
+            const categoryName = prompt('আপনি কোন নতুন ক্যাটাগরি চান?');
+            if (categoryName) {
+                showToast('আপনার অনুরোধ গ্রহণ করা হয়েছে। আমরা শীঘ্রই যোগ করবো।', 'success');
+            }
+        }
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast bg-${type === 'error' ? 'red' : 'emerald'}-600 text-white px-6 py-3 rounded-lg shadow-lg`;
+            toast.textContent = message;
+            
+            const container = document.getElementById('toast-container');
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Mock data function (fallback)
+        function getMockCategories() {
+            return [
+                { 
+                    id: '1', 
+                    slug: 'electric', 
+                    name: 'Electrician', 
+                    nameBn: 'ইলেকট্রিশিয়ান', 
+                    icon: '<i class="fas fa-bolt text-emerald-500"></i>',
+                    description: 'Wiring, AC, Generator',
+                    descriptionBn: 'ওয়্যারিং, এসি, জেনারেটর'
+                },
+                { 
+                    id: '2', 
+                    slug: 'plumbing', 
+                    name: 'Plumber', 
+                    nameBn: 'প্লাম্বার', 
+                    icon: '<i class="fas fa-wrench text-emerald-500"></i>',
+                    description: 'Pipe, Bathroom, Pump',
+                    descriptionBn: 'পাইপ, বাথরুম, পাম্প'
+                },
+                { 
+                    id: '3', 
+                    slug: 'carpenter', 
+                    name: 'Carpenter', 
+                    nameBn: 'কার্পেন্টার', 
+                    icon: '<i class="fas fa-hammer text-emerald-500"></i>',
+                    description: 'Furniture, Door, Wood',
+                    descriptionBn: 'ফার্নিচার, দরজা, কাঠ'
+                },
+                { 
+                    id: '4', 
+                    slug: 'painter', 
+                    name: 'Painter', 
+                    nameBn: 'পেইন্টার', 
+                    icon: '<i class="fas fa-paint-roller text-emerald-500"></i>', 
+                    description: 'বাড়ি রং করা, দেয়াল ডেকোরেশন, এক্সটেরিয়র এবং ইন্টেরিয়র পেইন্টিং সার্ভিস',
+                    providerCount: 21,
+                    isActive: true 
+                },
+                { 
+                    id: '5', 
+                    slug: 'mechanic', 
+                    name: 'Mechanic', 
+                    nameBn: 'মেকানিক', 
+                    icon: '<i class="fas fa-car text-emerald-500"></i>', 
+                    description: 'গাড়ি মেরামত, রক্ষণাবেক্ষণ, বাইক সার্ভিসিং এবং অটোমোটিভ সলিউশন',
+                    providerCount: 38,
+                    isActive: true 
+                },
+                { 
+                    id: '6', 
+                    slug: 'ac-service', 
+                    name: 'AC Service', 
+                    nameBn: 'এসি সার্ভিস', 
+                    icon: '<i class="fas fa-snowflake text-emerald-500"></i>', 
+                    description: 'এসি ইন্সটলেশন, মেরামত, মেইনটেন্যান্স এবং গ্যাস রিফিলিং',
+                    providerCount: 19,
+                    isActive: true 
+                },
+                { 
+                    id: '7', 
+                    slug: 'cleaning', 
+                    name: 'Cleaning', 
+                    nameBn: 'পরিষ্কার', 
+                    icon: '<i class="fas fa-broom text-emerald-500"></i>', 
+                    description: 'বাড়ি পরিষ্কার, অফিস পরিষ্কার, ডিপ ক্লিনিং এবং স্যানিটেশন সার্ভিস',
+                    providerCount: 15,
+                    isActive: true 
+                },
+                { 
+                    id: '8', 
+                    slug: 'gardening', 
+                    name: 'Gardening', 
+                    nameBn: 'বাগান', 
+                    icon: '<i class="fas fa-leaf text-emerald-500"></i>', 
+                    description: 'লন মেইনটেন্যান্স, গাছের যত্ন, ল্যান্ডস্কেপিং এবং বাগান ডিজাইন',
+                    providerCount: 12,
+                    isActive: true 
+                },
+                { 
+                    id: '9', 
+                    slug: 'photography', 
+                    name: 'Photography', 
+                    nameBn: 'ফটোগ্রাফি', 
+                    icon: '<i class="fas fa-camera text-emerald-500"></i>', 
+                    description: 'ইভেন্ট ফটোগ্রাফি, পোর্ট্রেট ফটোগ্রাফি, ওয়েডিং ফটোগ্রাফি এবং ভিডিওগ্রাফি',
+                    providerCount: 24,
+                    isActive: true 
+                },
+                { 
+                    id: '10', 
+                    slug: 'tutor', 
+                    name: 'Tutor', 
+                    nameBn: 'টিউটর', 
+                    icon: '<i class="fas fa-book text-emerald-500"></i>', 
+                    description: 'প্রাইভেট টিউটরিং, একাডেমিক কোচিং, ভাষা শিক্ষা এবং স্কিল ডেভেলপমেন্ট',
+                    providerCount: 56,
+                    isActive: true 
+                },
+                { 
+                    id: '11', 
+                    slug: 'computer', 
+                    name: 'Computer Service', 
+                    nameBn: 'কম্পিউটার সার্ভিস', 
+                    icon: '<i class="fas fa-laptop text-emerald-500"></i>', 
+                    description: 'কম্পিউটার মেরামত, সফটওয়্যার ইন্সটলেশন, ভাইরাস রিমুভাল এবং আইটি সাপোর্ট',
+                    providerCount: 18,
+                    isActive: true 
+                },
+                { 
+                    id: '12', 
+                    slug: 'beauty', 
+                    name: 'Beauty & Salon', 
+                    nameBn: 'সৌন্দর্য ও সেলুন', 
+                    icon: '<i class="fas fa-magic text-emerald-500"></i>', 
+                    description: 'চুল কাটা, মেকআপ, বিউটি ট্রিটমেন্ট এবং সেলুন সার্ভিস',
+                    providerCount: 33,
+                    isActive: true 
+                }
+            ];
+        }
+    </script>
+    <!-- Mobile Bottom Navigation -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-2 py-3 flex justify-around items-center">
+        <a href="index.html" class="flex flex-col items-center text-gray-500 hover:text-emerald-600 transition">
+            <i class="fas fa-home text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">হোম</span>
+        </a>
+        <a href="categories.html" class="flex flex-col items-center text-emerald-600">
+            <i class="fas fa-th-large text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">ক্যাটাগরি</span>
+        </a>
+        <a href="providers.html" class="flex flex-col items-center text-gray-500 hover:text-emerald-600 transition">
+            <i class="fas fa-users text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">প্রোভাইডার</span>
+        </a>
+        <a href="login.html" class="flex flex-col items-center text-gray-500 hover:text-emerald-600 transition">
+            <i class="fas fa-user text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">অ্যাকাউন্ট</span>
+        </a>
+    </div>
+</body>
+</html>

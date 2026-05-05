@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provider Profile - কুমিল্লা সেবা</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        .hero-gradient {
+            background: linear-gradient(rgba(4, 120, 87, 0.85), rgba(6, 78, 59, 0.9)), url('assets/hero_bg.png');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .bangla-font {
+            font-family: 'SolaimanLipi', 'Arial', sans-serif;
+        }
+        
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 pb-16 md:pb-0">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <a href="index.html" class="flex items-center gap-2">
+                        <img src="assets/app_logo.png" alt="Logo" class="h-8 w-8 rounded-md shadow-sm">
+                        <div>
+                            <h1 class="text-2xl font-bold text-emerald-600 bangla-font leading-none">কুমিল্লা সেবা</h1>
+                            <span class="text-gray-500 text-[10px] uppercase font-bold tracking-wider">লোকাল সেবা</span>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="index.html" class="text-gray-700 hover:text-emerald-600 transition">হোম</a>
+                    <a href="categories.html" class="text-gray-700 hover:text-emerald-600 transition">ক্যাটাগরি</a>
+                    <a href="providers.html" class="text-gray-700 hover:text-emerald-600 transition">প্রোভাইডার</a>
+                    <a href="register.html" id="register-btn" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 transition">নিবন্ধন</a>
+                    <a href="login.html" id="login-btn" class="border border-emerald-600 text-emerald-600 px-4 py-2 rounded hover:bg-emerald-50 transition">লগইন</a>
+                    <div id="user-info" class="hidden text-gray-700"></div>
+                    <button id="logout-btn" class="hidden border border-red-600 text-red-600 px-4 py-2 rounded hover:bg-red-50 transition">লগআউট</button>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <button class="md:hidden" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+            
+            <!-- Mobile menu -->
+            <div id="mobile-menu" class="hidden md:hidden pb-4">
+                <a href="index.html" class="block py-2 text-gray-700 hover:text-emerald-600">হোম</a>
+                <a href="categories.html" class="block py-2 text-gray-700 hover:text-emerald-600">ক্যাটাগরি</a>
+                <a href="providers.html" class="block py-2 text-gray-700 hover:text-emerald-600">প্রোভাইডার</a>
+                <a href="register.html" class="block py-2 text-gray-700 hover:text-emerald-600">নিবন্ধন</a>
+                <a href="login.html" class="block py-2 text-gray-700 hover:text-emerald-600">লগইন</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <section class="hero-gradient text-white">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex items-center gap-4 mb-6">
+                <a href="providers.html" class="text-white hover:text-emerald-200">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold bangla-font">প্রোভাইডার প্রোফাইল</h1>
+                    <p class="text-emerald-100 mt-1">সার্ভিস প্রোভাইডারের বিস্তারিত</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Provider Info -->
+    <section class="py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Main Content -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Provider Card -->
+                    <div id="provider-card" class="bg-white rounded-lg shadow-md p-6 card-hover">
+                        <!-- Loading spinner -->
+                        <div class="flex justify-center py-8">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+
+                    <!-- Services -->
+                    <div id="services-card" class="bg-white rounded-lg shadow-md p-6 card-hover">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Skills -->
+                    <div id="skills-card" class="bg-white rounded-lg shadow-md p-6 card-hover">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Reviews -->
+                    <div id="reviews-card" class="bg-white rounded-lg shadow-md p-6 card-hover">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Contact Info -->
+                    <div id="contact-card" class="bg-white rounded-lg shadow-md p-6 card-hover">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Working Hours -->
+                    <div id="hours-card" class="bg-white rounded-lg shadow-md p-6 card-hover">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Service Areas -->
+                    <div id="areas-card" class="bg-white rounded-lg shadow-md p-6 card-hover">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Certifications -->
+                    <div id="certifications-card" class="bg-white rounded-lg shadow-md p-6 card-hover">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <h3 class="text-2xl font-bold mb-4 bangla-font">কুমিল্লা সেবা</h3>
+                <p class="text-gray-400 mb-4">আপনার বিশ্বস্ত সার্ভিস প্রোভাইডার ডিরেক্টরি</p>
+                <div class="flex justify-center space-x-4 mb-4">
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-youtube"></i></a>
+                </div>
+                <p class="text-gray-400 text-sm">© 2024 কুমিল্লা সেবা. সর্বস্বত্ব সংরক্ষিত.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Firebase Scripts -->
+    <script src="firebase-project/firebase-config.js"></script>
+    <script src="firebase-project/auth.js"></script>
+    <script src="firebase-project/db.js"></script>
+
+    <!-- Main JavaScript -->
+    <script>
+        // Global variables
+        let currentProvider = null;
+        let providerReviews = [];
+        let isSaved = false;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        async function initializeApp() {
+            try {
+                // Get provider ID from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const providerId = urlParams.get('id');
+
+                if (!providerId) {
+                    showToast('Provider ID not found', 'error');
+                    setTimeout(() => window.location.href = 'providers.html', 2000);
+                    return;
+                }
+
+                // Load provider data
+                await loadProvider(providerId);
+                
+                // Load provider reviews
+                await loadProviderReviews(providerId);
+
+                // Setup event listeners
+                setupEventListeners();
+
+                console.log('Provider profile page initialized successfully');
+            } catch (error) {
+                console.error('Error initializing provider profile page:', error);
+                showToast('পেজ লোড করতে সমস্যা হয়েছে', 'error');
+            }
+        }
+
+        // Load provider data
+        async function loadProvider(providerId) {
+            try {
+                const result = await dbManager.getProviderById(providerId);
+                if (result.success) {
+                    currentProvider = result.data;
+                    renderProviderCard();
+                    renderContactCard();
+                    renderServicesCard();
+                    renderSkillsCard();
+                    renderHoursCard();
+                    renderAreasCard();
+                    renderCertificationsCard();
+                } else {
+                    // Use mock data if Firebase fails
+                    currentProvider = getMockProvider(providerId);
+                    renderProviderCard();
+                    renderContactCard();
+                    renderServicesCard();
+                    renderSkillsCard();
+                    renderHoursCard();
+                    renderAreasCard();
+                    renderCertificationsCard();
+                }
+            } catch (error) {
+                console.error('Error loading provider:', error);
+                currentProvider = getMockProvider(providerId);
+                renderProviderCard();
+                renderContactCard();
+                renderServicesCard();
+                renderSkillsCard();
+                renderHoursCard();
+                renderAreasCard();
+                renderCertificationsCard();
+            }
+        }
+
+        // Load provider reviews
+        async function loadProviderReviews(providerId) {
+            try {
+                const result = await dbManager.getProviderReviews(providerId);
+                if (result.success) {
+                    providerReviews = result.data;
+                    renderReviewsCard();
+                } else {
+                    providerReviews = getMockReviews();
+                    renderReviewsCard();
+                }
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+                providerReviews = getMockReviews();
+                renderReviewsCard();
+            }
+        }
+
+        // Render provider card
+        function renderProviderCard() {
+            const container = document.getElementById('provider-card');
+            
+            container.innerHTML = `
+                <div class="flex items-start gap-4 mb-6">
+                    ${currentProvider.photoURL ? 
+                        `<img src="${currentProvider.photoURL}" alt="${currentProvider.name}" class="w-20 h-20 rounded-full object-cover border-2 border-emerald-100 flex-shrink-0">` :
+                        `<div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-emerald-100 flex-shrink-0">
+                            <img src="assets/provider_placeholder.png" class="w-full h-full object-cover">
+                        </div>`
+                    }
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <h2 class="text-2xl font-bold">${currentProvider.name}</h2>
+                            ${currentProvider.isVerified ? '<i class="fas fa-check-circle text-emerald-600"></i>' : ''}
+                        </div>
+                        <div class="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                            <div class="flex items-center gap-1">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>${currentProvider.location}</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <i class="fas fa-clock"></i>
+                                <span>${currentProvider.experience} বছর</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 mb-2">
+                            ${generateStars(currentProvider.rating)}
+                            <span class="text-sm text-gray-600">(${currentProvider.reviewCount} রিভিউ)</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="shareProfile()" class="p-2 border border-gray-300 rounded hover:bg-gray-50 transition">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                        <button onclick="toggleSave()" id="save-btn" class="p-2 border border-gray-300 rounded hover:bg-gray-50 transition">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </div>
+                </div>
+                <p class="text-gray-700 mb-6">${currentProvider.description}</p>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="callProvider('${currentProvider.phone}')" class="flex-1 bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition bangla-font">
+                        <i class="fas fa-phone mr-2"></i>
+                        কল করুন: ${currentProvider.phone}
+                    </button>
+                    <button onclick="whatsappProvider('${currentProvider.whatsapp}')" class="flex-1 border border-emerald-600 text-emerald-600 py-3 rounded-lg hover:bg-emerald-50 transition bangla-font">
+                        <i class="fab fa-whatsapp mr-2"></i>
+                        হোয়াটসঅ্যাপ
+                    </button>
+                </div>
+            `;
+        }
+
+        // Render contact card
+        function renderContactCard() {
+            const container = document.getElementById('contact-card');
+            
+            container.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 bangla-font">যোগাযোগের তথ্য</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-sm text-gray-600 mb-1 bangla-font">ফোন</div>
+                        <div class="font-semibold">${currentProvider.phone}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-600 mb-1 bangla-font">হোয়াটসঅ্যাপ</div>
+                        <div class="font-semibold">${currentProvider.whatsapp}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-600 mb-1 bangla-font">ইমেইল</div>
+                        <div class="font-semibold">${currentProvider.email || 'দেওয়া হয়নি'}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-600 mb-1 bangla-font">ঠিকানা</div>
+                        <div class="font-semibold">${currentProvider.address || currentProvider.location}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render services card
+        function renderServicesCard() {
+            const container = document.getElementById('services-card');
+            const services = currentProvider.services || getDefaultServices(currentProvider.category);
+            
+            container.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 bangla-font">প্রদত্ত সার্ভিস সমূহ</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    ${services.map(service => `
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-check-circle text-emerald-600"></i>
+                            <span class="text-sm">${service}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Render skills card
+        function renderSkillsCard() {
+            const container = document.getElementById('skills-card');
+            const skills = Array.isArray(currentProvider.skills) ? currentProvider.skills : JSON.parse(currentProvider.skills || '[]');
+            
+            container.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 bangla-font">দক্ষতা এবং অভিজ্ঞতা</h3>
+                <div class="flex flex-wrap gap-2">
+                    ${skills.map(skill => `
+                        <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">${skill}</span>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Render working hours card
+        function renderHoursCard() {
+            const container = document.getElementById('hours-card');
+            const workingHours = currentProvider.workingHours || getDefaultWorkingHours();
+            
+            container.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 bangla-font">কাজের সময়</h3>
+                <div class="space-y-2">
+                    ${Object.entries(workingHours).map(([day, hours]) => `
+                        <div class="flex justify-between text-sm">
+                            <span class="capitalize font-medium">${day}</span>
+                            <span class="${hours === 'Closed' ? 'text-red-600' : 'text-gray-600'}">${hours}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Render service areas card
+        function renderAreasCard() {
+            const container = document.getElementById('areas-card');
+            const areas = currentProvider.areas || getDefaultAreas();
+            
+            container.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 bangla-font">সার্ভিস এলাকা</h3>
+                <div class="flex flex-wrap gap-2">
+                    ${areas.map(area => `
+                        <span class="bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full text-sm">${area}</span>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Render certifications card
+        function renderCertificationsCard() {
+            const container = document.getElementById('certifications-card');
+            const certifications = currentProvider.certifications || getDefaultCertifications();
+            
+            container.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 bangla-font">সার্টিফিকেশন</h3>
+                <div class="space-y-2">
+                    ${certifications.map(cert => `
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-award text-emerald-600"></i>
+                            <span class="text-sm">${cert}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Render reviews card
+        function renderReviewsCard() {
+            const container = document.getElementById('reviews-card');
+            
+            container.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold bangla-font">গ্রাহকের রিভিউ</h3>
+                    <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm bangla-font">${providerReviews.length} রিভিউ</span>
+                </div>
+                <div class="space-y-4">
+                    ${providerReviews.map(review => createReviewCard(review)).join('')}
+                </div>
+                <button onclick="loadMoreReviews()" class="w-full mt-4 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition bangla-font">
+                    আরও রিভিউ দেখুন
+                </button>
+            `;
+        }
+
+        // Create review card HTML
+        function createReviewCard(review) {
+            return `
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-start justify-between mb-2">
+                        <div>
+                            <div class="font-semibold">${review.customerName}</div>
+                            <div class="flex items-center gap-1">
+                                ${generateStars(review.rating)}
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            ${new Date(review.date).toLocaleDateString('bn-BD')}
+                        </div>
+                    </div>
+                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">${review.service}</span>
+                    <p class="text-sm text-gray-700 mt-2">${review.comment}</p>
+                </div>
+            `;
+        }
+
+        // Generate star rating HTML
+        function generateStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= Math.floor(rating)) {
+                    stars += '<i class="fas fa-star text-yellow-400"></i>';
+                } else {
+                    stars += '<i class="far fa-star text-gray-300"></i>';
+                }
+            }
+            return stars;
+        }
+
+        // Contact functions
+        function callProvider(phone) {
+            window.open(`tel:${phone}`);
+        }
+
+        function whatsappProvider(whatsapp) {
+            const message = `হ্যালো, আমি লোকাল সেবা থেকে আপনার প্রোফাইল দেখেছি এবং আপনার সার্ভিস প্রয়োজন।`;
+            window.open(`https://wa.me/${whatsapp.replace(/^0/, '880')}?text=${encodeURIComponent(message)}`);
+        }
+
+        // Share profile
+        async function shareProfile() {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: currentProvider.name,
+                        text: `লোকাল সেবা থেকে ${currentProvider.name} এর প্রোফাইল দেখুন - ${currentProvider.location} এর পেশাদার সার্ভিস প্রোভাইডার`,
+                        url: window.location.href
+                    });
+                } catch (err) {
+                    console.log('Error sharing:', err);
+                    copyToClipboard();
+                }
+            } else {
+                copyToClipboard();
+            }
+        }
+
+        function copyToClipboard() {
+            const dummy = document.createElement('input');
+            document.body.appendChild(dummy);
+            dummy.value = window.location.href;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            showToast('Profile link copied to clipboard', 'success');
+        }
+
+        // Save/Unsave provider
+        function toggleSave() {
+            isSaved = !isSaved;
+            const saveBtn = document.getElementById('save-btn');
+            
+            if (isSaved) {
+                saveBtn.classList.add('text-red-600', 'border-red-600');
+                saveBtn.innerHTML = '<i class="fas fa-heart"></i>';
+                showToast('Provider saved to favorites', 'success');
+            } else {
+                saveBtn.classList.remove('text-red-600', 'border-red-600');
+                saveBtn.innerHTML = '<i class="far fa-heart"></i>';
+                showToast('Provider removed from favorites', 'info');
+            }
+        }
+
+        // Load more reviews
+        function loadMoreReviews() {
+            showToast('Loading more reviews...', 'info');
+            // In a real app, this would load more reviews from the server
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Logout button
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    const result = await authManager.logout();
+                    if (result.success) {
+                        showToast('সফলভাবে লগআউট হয়েছে', 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    }
+                });
+            }
+        }
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast bg-${type === 'error' ? 'red' : type === 'success' ? 'emerald' : 'emerald'}-600 text-white px-6 py-3 rounded-lg shadow-lg`;
+            toast.textContent = message;
+            
+            const container = document.getElementById('toast-container');
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Helper functions for default data
+        function getDefaultServices(category) {
+            const categoryServices = {
+                electric: ['হোম ওয়্যারিং', 'এসি ইন্সটলেশন', 'জেনারেটর সার্ভিস', 'মোটর মেরামত'],
+                plumbing: ['পাইপ ফিটিং', 'বাথরুম ইন্সটলেশন', 'পাম্প মেরামত'],
+                carpenter: ['ফার্নিচার তৈরি', 'দরজা ইন্সটলেশন', 'ক্যাবিনেট কাজ'],
+                painter: ['ইন্টেরিয়র পেইন্টিং', 'এক্সটেরিয়র পেইন্টিং', 'দেয়াল ডিজাইন'],
+                mechanic: ['গাড়ি মেরামত', 'বাইক সার্ভিস', 'এসি সার্ভিস'],
+                'ac-service': ['এসি ইন্সটলেশন', 'এসি মেরামত', 'গ্যাস রিফিলিং']
+            };
+            
+            const cat = Array.isArray(category) ? category[0] : category;
+            return categoryServices[cat] || ['সাধারণ সার্ভিস'];
+        }
+
+        function getDefaultWorkingHours() {
+            return {
+                saturday: 'সকাল ৯:০০ - রাত ৮:০০',
+                sunday: 'সকাল ৯:০০ - রাত ৮:০০',
+                monday: 'সকাল ৯:০০ - রাত ৮:০০',
+                tuesday: 'সকাল ৯:০০ - রাত ৮:০০',
+                wednesday: 'সকাল ৯:০০ - রাত ৮:০০',
+                thursday: 'সকাল ৯:০০ - রাত ৮:০০',
+                friday: 'বন্ধ'
+            };
+        }
+
+        function getDefaultAreas() {
+            return ['কুমিল্লা সদর', 'ব্রাহ্মণপাড়া', 'বুড়িচং', 'দেবিদ্বার', 'মুরাদনগর'];
+        }
+
+        function getDefaultCertifications() {
+            return ['লাইসেন্সপ্রাপ্ত পেশাদার', 'নিরাপত্তা সনদপ্রাপ্ত', '৫+ বছরের অভিজ্ঞতা'];
+        }
+
+        // Mock data functions (fallback)
+        function getMockProvider(providerId) {
+            return {
+                id: providerId,
+                name: 'রহিম ইলেকট্রিক্স',
+                phone: '01712345678',
+                whatsapp: '01712345678',
+                email: 'rahim.electric@example.com',
+                category: ['electric'],
+                skills: '["হোম ওয়্যারিং", "এসি ইন্সটলেশন", "জেনারেটর সার্ভিস", "মোটর মেরামত", "প্যানেল বোর্ড", "ইনভার্টার ইন্সটলেশন"]',
+                experience: 8,
+                rating: 4.5,
+                reviewCount: 23,
+                location: 'কুমিল্লা সদর',
+                address: 'কান্দিরপাড়, কুমিল্লা সদর, কুমিল্লা',
+                isApproved: true,
+                isVerified: true,
+                photoURL: null,
+                description: '৮+ বছরের অভিজ্ঞতাসম্পন্ন পেশাদার ইলেকট্রিক্যাল সার্ভিস। হোম ওয়্যারিং, এসি ইন্সটলেশন এবং জেনারেটর রক্ষণাবেক্ষণে বিশেষজ্ঞ। সাশ্রয়ী মূল্যে মানসম্পন্ন সার্ভিস প্রদানকারী লাইসেন্সপ্রাপ্ত এবং বীমাকৃত ইলেকট্রিশিয়ান।',
+                services: ['হোম ওয়্যারিং ও রিওয়্যারিং', 'এসি ইন্সটলেশন ও মেরামত', 'জেনারেটর সার্ভিস ও মেরামত', 'মোটর ওয়াইন্ডিং ও মেরামত', 'প্যানেল বোর্ড ইন্সটলেশন', 'ইনভার্টার ও ইউপিএস ইন্সটলেশন', 'ইলেকট্রিক্যাল ট্রাবলশুটিং', 'লাইটিং ইন্সটলেশন'],
+                certifications: ['লাইসেন্সপ্রাপ্ত ইলেকট্রিশিয়ান', 'নিরাপত্তা সনদপ্রাপ্ত', '৮+ বছরের অভিজ্ঞতা'],
+                areas: ['কুমিল্লা সদর', 'ব্রাহ্মণপাড়া', 'বুড়িচং', 'দেবিদ্বার', 'মুরাদনগর'],
+                workingHours: {
+                    saturday: 'সকাল ৯:০০ - রাত ৮:০০',
+                    sunday: 'সকাল ৯:০০ - রাত ৮:০০',
+                    monday: 'সকাল ৯:০০ - রাত ৮:০০',
+                    tuesday: 'সকাল ৯:০০ - রাত ৮:০০',
+                    wednesday: 'সকাল ৯:০০ - রাত ৮:০০',
+                    thursday: 'সকাল ৯:০০ - রাত ৮:০০',
+                    friday: 'বন্ধ'
+                }
+            };
+        }
+
+        function getMockReviews() {
+            return [
+                {
+                    id: '1',
+                    customerName: 'আব্দুল করিম',
+                    rating: 5,
+                    date: '2024-01-15',
+                    comment: 'চমৎকার সার্ভিস! অত্যন্ত পেশাদার এবং সময়মতো কাজ সম্পন্ন করেছেন। আমি অবশ্যই সুপারিশ করব।',
+                    service: 'এসি ইন্সটলেশন'
+                },
+                {
+                    id: '2',
+                    customerName: 'মোঃ সেলিম',
+                    rating: 4,
+                    date: '2024-01-10',
+                    comment: 'কাজের মান ভালো এবং দামও যুক্তিসঙ্গত। আমাদের বৈদ্যুতিক সমস্যা দ্রুত সমাধান করেছেন।',
+                    service: 'হোম ওয়্যারিং'
+                },
+                {
+                    id: '3',
+                    customerName: 'জাহানারা বেগম',
+                    rating: 5,
+                    date: '2024-01-05',
+                    comment: 'অত্যন্ত অভিজ্ঞ এবং বিশ্বস্ত। কাজ শুরু করার আগে সবকিছু পরিষ্কারভাবে বুঝিয়ে বলেছেন।',
+                    service: 'জেনারেটর মেরামত'
+                }
+            ];
+        }
+    </script>
+    <!-- Mobile Bottom Navigation -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-2 py-3 flex justify-around items-center">
+        <a href="index.html" class="flex flex-col items-center text-gray-500 hover:text-emerald-600 transition">
+            <i class="fas fa-home text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">হোম</span>
+        </a>
+        <a href="categories.html" class="flex flex-col items-center text-gray-500 hover:text-emerald-600 transition">
+            <i class="fas fa-th-large text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">ক্যাটাগরি</span>
+        </a>
+        <a href="providers.html" class="flex flex-col items-center text-emerald-600">
+            <i class="fas fa-users text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">প্রোভাইডার</span>
+        </a>
+        <a href="login.html" class="flex flex-col items-center text-gray-500 hover:text-emerald-600 transition">
+            <i class="fas fa-user text-xl mb-1"></i>
+            <span class="text-[10px] bangla-font">অ্যাকাউন্ট</span>
+        </a>
+    </div>
+</body>
+</html>
