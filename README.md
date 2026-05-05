@@ -2,7 +2,7 @@
 
 কুমিল্লা সেবা | Comilla Seba
 
-![Comilla Seba Banner](https://via.placeholder.com/1200x400/1E3A8A/ffffff?text=কুমিল্লা+সেবা+|+Comilla+Seba)
+![Comilla Seba](https://via.placeholder.com/1200x400/1E3A8A/ffffff?text=কুমিল্লা+সেবা+|+Comilla+Seba)
 
 আপনার এলাকার বিশ্বস্ত সেবা প্রদানকারী খুঁজুন — এক ক্লিকে
 
