@@ -72,6 +72,6 @@ Fork → Star → Pull Request করুন।
 
 Made with ❤️ for the people of Comilla, Bangladesh**
 
-[⭐ প্রজেক্টটি স্টার দিন](https://github.com/yourusername/comilla-seba)
+[⭐ প্রজেক্টটি স্টার দিন](https://github.com/nishanpavel/comilla-seba)
 
 </div>
