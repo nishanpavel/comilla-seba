@@ -49,7 +49,7 @@ Comilla Seba হলো কুমিল্লা জেলার জন্য ত
 
 🚀 লাইভ ওয়েবসাইট
 
-🌐 [https://comilla-seba.vercel.app](https://comilla-seba.vercel.app/)**
+🌐 [https://comilla-seba.vercel.app](https://comilla-sebaa.vercel.app/)
 
 🛣️ ভবিষ্যত রোডম্যাপ
 
